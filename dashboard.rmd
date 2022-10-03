@@ -1,16 +1,16 @@
 ---
-title: "Dashboard melkcontrole"
+title: Dashboard melkcontrole
 output: 
   flexdashboard::flex_dashboard:
     orientation: columns
     vertical_layout: fill
 ---
 
+
 ```{r setup, include=FALSE}
 library(flexdashboard)
-taal <- "nl"
+taal <- "de"
 ## taalsleutels
-source('taalsleutels.R')
 knitr::opts_chunk$set(echo = TRUE)
 library(RODBC)
 library(RPostgres)
@@ -47,6 +47,7 @@ meanle <- function(x,ndec = 2){
 }
 klant <- "milsana"
 kid <- quer_pg("select id from farms where name = '",klant,"'")
+source('taalsleutels.R')
 
 dats <- quer_pg("select distinct(mc.date_time)
                 from milk_controls mc 
@@ -103,23 +104,19 @@ mprdata$dilcat <- factor(cut(mprdata$dil,breaks = c(-10,0,30,60,200,max(mprdata$
 levels(mprdata$dilcat) <- sleutels$dilcat[[taal]]
 ```
 
-
-# Grafiek verloop productie {data-navmenu="Graphs" }
+`r paste("#",sleutels$titels$grafiekproductie[taal],'{data-navmenu="Graphs"}',sep = " ")`
 
 ```{r,echo=FALSE}
-p <- ggplot(data=mprdata[mprdata$date_time == maxd,],aes(x=dil,y=production,label = pedigree_id))+
+p <- ggplot(data=mprdata[mprdata$date_time == maxd,],aes(x=dil,y=production,label1=reg_id))+
   stat_smooth(aes(colour = nlactcat),size = 1,se = FALSE) +
   geom_point(aes(colour = nlactcat))+facet_wrap(~nlactcat) + 
   scale_x_continuous(limits = c(1, 400))
-ggplotly(p)
+ggplotly(p,tooltip = )
 
 ```
 
 
-
-
-
-# Table Snelzicht {data-navmenu="Tables" }
+`r paste("#",sleutels$titels$tabsnelzicht[taal],'{data-navmenu="Tables"}',sep = " ")`
 
 ```{r snelzicht, echo = FALSE,results='character'}
 sn <- matrix(unlist(by(mprdata[mprdata$date_time>mind&!mprdata$double,],
@@ -135,6 +132,7 @@ sn <- matrix(unlist(by(mprdata[mprdata$date_time>mind&!mprdata$double,],
              byrow = T,ncol = 8)
 rownames(sn) <- unique(as.character(mprdata$date_time[mprdata$date_time>mind]))
 colnames(sn) <- sleutels$tabsnelzicht[[taal]]
+sn <- sn[order(row.names(sn)),]
 sn %>%
   kbl(caption = sleutels$cptsnelzicht[[taal]]) %>%
   kable_styling(fixed_thead = T) %>%
@@ -142,7 +140,7 @@ sn %>%
 ```
 
 
-# Table Productie {data-navmenu="Tables"}
+`r paste("#",sleutels$titels$tabproductie[taal],'{data-navmenu="Tables"}',sep = " ")`
 
 ```{r productie,echo = FALSE,results = 'character'}
 tp <- melt(with(mprdata[mprdata$date_time>mind,],
@@ -160,7 +158,8 @@ tp[,-c(1)] %>%
   pack_rows(sleutels$nlactcat[[taal]][4],16,20)
 ```
 
-# Table Vet {data-navmenu="Tables"}
+`r paste("#",sleutels$titels$tabvet[taal],'{data-navmenu="Tables"}',sep = " ")`
+
 ```{r vet,echo = FALSE,results = 'character'}
 tf <- melt(with(mprdata[mprdata$date_time>mind,],
       tapply(1:length(fat_pct),list(nlactcat,dilcat,date_time),function(i)
@@ -178,7 +177,9 @@ tf[,-c(1)] %>%
   pack_rows(sleutels$nlactcat[[taal]][4],16,20) 
 ```
 
-# Table Protein {data-navmenu="Tables"}
+
+`r paste("#",sleutels$titels$tabeiwit[taal],'{data-navmenu="Tables"}',sep = " ")`
+
 ```{r protein,echo =FALSE,results = 'character'}
 tprot <- melt(with(mprdata[mprdata$date_time>mind,],
       tapply(1:length(fat_pct),list(nlactcat,dilcat,date_time),function(i)
@@ -196,7 +197,7 @@ tprot[,-c(1)] %>%
   pack_rows(sleutels$nlactcat[[taal]][4],16,20) 
 ```
 
-# Table Lactose {data-navmenu="Tables"}
+`r paste("#",sleutels$titels$tablactose[taal],'{data-navmenu="Tables"}',sep = " ")`
 
 ```{r lactose,echo = FALSE,results = 'character'}
 tlact <- melt(with(mprdata[mprdata$date_time>mind,],
@@ -215,7 +216,8 @@ tlact[,-c(1)] %>%
   pack_rows(sleutels$nlactcat[[taal]][4],16,20) 
 ```
 
-# Table Ketose {data-navmenu="Tables"}
+`r paste("#",sleutels$titels$tabketose[taal],'{data-navmenu="Tables"}',sep = " ")`
+
 ```{r ketose,echo = FALSE,results = 'character'}
 tketo <- melt(with(mprdata[mprdata$date_time>mind,],
       tapply(1:length(pedigree_id),list(nlactcat,dilcat,date_time),function(i)
@@ -233,7 +235,8 @@ tketo[,-c(1)] %>%
   pack_rows(sleutels$nlactcat[[taal]][4],16,20)
 ```
 
-# Table Acidosis {data-navmenu="Tables"}
+`r paste("#",sleutels$titels$tabacidose[taal],'{data-navmenu="Tables"}',sep = " ")`
+
 ```{r acidosis,echo=FALSE,results = 'character'}
 tacid <- melt(with(mprdata[mprdata$date_time>mind,],
       tapply(1:length(pedigree_id),list(nlactcat,dilcat,date_time),function(i)
@@ -251,7 +254,7 @@ tacid[,-c(1)] %>%
   pack_rows(sleutels$nlactcat[[taal]][4],16,20) 
 ```
 
-# Table SCC {data-navmenu="Tables"}
+`r paste("#",sleutels$titels$tabscc[taal],'{data-navmenu="Tables"}',sep = " ")`
 ```{r scc,echo = FALSE,results = 'character'}
 tcel <- melt(with(mprdata[mprdata$date_time>mind,],
       tapply(1:length(cells),list(nlactcat,dilcat,date_time),function(i)
@@ -269,8 +272,7 @@ tcel[,-c(1)] %>%
   pack_rows(sleutels$nlactcat[[taal]][4],16,20)
 ```
 
-# Table SCC Hoog {data-navmenu="Tables"}
-
+`r paste("#",sleutels$titels$tabscchoog[taal],'{data-navmenu="Tables"}',sep = " ")`
 ```{r scchoog,echo = FALSE,results = 'character'}
 tchoog <- melt(with(mprdata[mprdata$date_time>mind,],
       tapply(1:length(cells),list(nlactcat,dilcat,date_time),function(i)
